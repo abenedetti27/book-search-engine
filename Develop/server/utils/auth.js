@@ -1,16 +1,12 @@
 const jwt = require('jsonwebtoken');
-
-// set token secret and expiration date
+const { AuthenticationError } = require('apollo-server-express');
 const secret = 'mysecretsshhhhh';
 const expiration = '2h';
 
 module.exports = {
-  // function for our authenticated routes
   authMiddleware: function ({ req }) {
-    // allows token to be sent via  req.query or headers
     let token = req.headers.authorization || '';
 
-    // ["Bearer", "<tokenvalue>"]
     if (req.headers.authorization) {
       token = token.split(' ').pop().trim();
     }
@@ -19,17 +15,13 @@ module.exports = {
       return { user: null };
     }
 
-    // verify token and get user data out of it
     try {
       const { data } = jwt.verify(token, secret, { maxAge: expiration });
       return { user: data };
-    } catch {
-      console.log('Invalid token');
-      return { user: null };
+    } catch (err) {
+      console.error('Invalid token', err);
+      throw new AuthenticationError('Invalid token');
     }
-
-    // send to next endpoint
-  
   },
   signToken: function ({ username, email, _id }) {
     const payload = { username, email, _id };
